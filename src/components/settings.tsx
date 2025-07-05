@@ -12,13 +12,19 @@ import {
 import { Link } from "./link";
 
 type Props = {
+  selectLLM: string;
+  onChangeSelectLLM: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  selectModel: string;
+  onChangeModel: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   openAiKey: string;
+  geminiApiKey: string;
   systemPrompt: string;
   chatLog: Message[];
   koeiroParam: KoeiroParam;
   koeiromapKey: string;
   onClickClose: () => void;
   onChangeAiKey: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onChangeGeminiApiKey: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onChangeSystemPrompt: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onChangeChatLog: (index: number, text: string) => void;
   onChangeKoeiroParam: (x: number, y: number) => void;
@@ -28,7 +34,12 @@ type Props = {
   onChangeKoeiromapKey: (event: React.ChangeEvent<HTMLInputElement>) => void;
 };
 export const Settings = ({
+  selectLLM,
+  onChangeSelectLLM,
+  selectModel,
+  onChangeModel,
   openAiKey,
+  geminiApiKey,
   chatLog,
   systemPrompt,
   koeiroParam,
@@ -36,6 +47,7 @@ export const Settings = ({
   onClickClose,
   onChangeSystemPrompt,
   onChangeAiKey,
+  onChangeGeminiApiKey,
   onChangeChatLog,
   onChangeKoeiroParam,
   onClickOpenVrmFile,
@@ -56,27 +68,90 @@ export const Settings = ({
         <div className="text-text1 max-w-3xl mx-auto px-24 py-64 ">
           <div className="my-24 typography-32 font-bold">設定</div>
           <div className="my-24">
-            <div className="my-16 typography-20 font-bold">OpenAI API キー</div>
-            <input
-              className="text-ellipsis px-16 py-8 w-col-span-2 bg-surface1 hover:bg-surface1-hover rounded-8"
-              type="text"
-              placeholder="sk-..."
-              value={openAiKey}
-              onChange={onChangeAiKey}
-            />
-            <div>
-              APIキーは
-              <Link
-                url="https://platform.openai.com/account/api-keys"
-                label="OpenAIのサイト"
+            <div className="my-16 typography-20 font-bold">LLM</div>
+            <div className="my-8">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="llm"
+                  value="openai"
+                  checked={selectLLM === "openai"}
+                  onChange={onChangeSelectLLM}
+                />
+                <span className="ml-8">OpenAI</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="llm"
+                  value="gemini"
+                  checked={selectLLM === "gemini"}
+                  onChange={onChangeSelectLLM}
+                />
+                <span className="ml-8">Google Gemini</span>
+              </label>
+            </div>
+            <div className="my-8">
+              <select
+                value={selectModel}
+                onChange={onChangeModel}
+                className="text-ellipsis px-16 py-8 w-col-span-2 bg-surface1 hover:bg-surface1-hover rounded-8"
+              >
+                {selectLLM === "openai" ? (
+                  <>
+                    <option value="gpt-4o">gpt-4o</option>
+                    <option value="gpt-4o-mini">gpt-4o-mini</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="	gemini-2.5-pro">gemini-2.5-pro</option>
+                    <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                    <option value="gemini-2.5-flash-lite-preview-06-17">gemini-2.5-flash-lite</option>  
+                  </>
+                )}
+              </select>
+            </div>
+          </div>
+          <div className="my-24">
+            <div className="my-16 typography-20 font-bold">API キー</div>
+            <div className="my-8">
+              <div className="my-8 font-bold">OpenAI API キー</div>
+              <input
+                className="text-ellipsis px-16 py-8 w-col-span-2 bg-surface1 hover:bg-surface1-hover rounded-8"
+                type="text"
+                placeholder="sk-..."
+                value={openAiKey}
+                onChange={onChangeAiKey}
               />
-              で取得できます。取得したAPIキーをフォームに入力してください。
+              <div>
+                APIキーは
+                <Link
+                  url="https://platform.openai.com/account/api-keys"
+                  label="OpenAIのサイト"
+                />
+                で取得できます。
+              </div>
+            </div>
+            <div className="my-8">
+              <div className="my-8 font-bold">Gemini API キー</div>
+              <input
+                className="text-ellipsis px-16 py-8 w-col-span-2 bg-surface1 hover:bg-surface1-hover rounded-8"
+                type="text"
+                placeholder="..."
+                value={geminiApiKey}
+                onChange={onChangeGeminiApiKey}
+              />
+              <div>
+                APIキーは
+                <Link
+                  url="https://ai.google.dev/pricing"
+                  label="Google AIのサイト"
+                />
+                で取得できます。
+              </div>
             </div>
             <div className="my-16">
-              ChatGPT
               APIはブラウザから直接アクセスしています。また、APIキーや会話内容はピクシブのサーバには保存されません。
-              <br />
-              ※利用しているモデルはChatGPT API (GPT-3.5)です。
             </div>
           </div>
           <div className="my-40">

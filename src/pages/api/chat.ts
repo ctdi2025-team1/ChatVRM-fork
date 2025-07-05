@@ -1,38 +1,52 @@
-import { Configuration, OpenAIApi } from "openai";
-
-import type { NextApiRequest, NextApiResponse } from "next";
-
-type Data = {
-  message: string;
-};
+import { NextApiRequest, NextApiResponse } from "next";
+import { getChatResponseStream } from "@/features/chat/openAiChat";
+import { geminiChat } from "@/features/chat/geminiChat";
+import { Message } from "@/features/messages/messages";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Data>
+  res: NextApiResponse
 ) {
-  const apiKey = req.body.apiKey || process.env.OPEN_AI_KEY;
+  const { messages, llm, apiKey, model } = req.body;
 
-  if (!apiKey) {
-    res
-      .status(400)
-      .json({ message: "APIキーが間違っているか、設定されていません。" });
+  const llmApiKey =
+    llm === "gemini"
+      ? apiKey.gemini || process.env.GEMINI_API_KEY
+      : apiKey.openai || process.env.OPENAI_API_KEY;
 
+  if (!llmApiKey) {
+    res.status(400).json({
+      error: "API key not found.",
+    });
     return;
   }
 
-  const configuration = new Configuration({
-    apiKey: apiKey,
-  });
+  try {
+    let stream: ReadableStream<Uint8Array>;
+    if (llm === "gemini") {
+      stream = await geminiChat(messages as Message[], llmApiKey, model);
+    } else {
+      stream = await getChatResponseStream(messages as Message[], llmApiKey, model);
+    }
 
-  const openai = new OpenAIApi(configuration);
+    res.writeHead(200, {
+      "Content-Type": "text/plain",
+      "Transfer-Encoding": "chunked",
+    });
 
-  const { data } = await openai.createChatCompletion({
-    model: "gpt-3.5-turbo",
-    messages: req.body.messages,
-  });
-
-  const [aiRes] = data.choices;
-  const message = aiRes.message?.content || "エラーが発生しました";
-
-  res.status(200).json({ message: message });
+    const reader = stream.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      res.write(value);
+    }
+    res.end();
+  } catch (e: any) {
+    console.error(e);
+    res.status(500).json({
+      error: e.message,
+    });
+  }
 }

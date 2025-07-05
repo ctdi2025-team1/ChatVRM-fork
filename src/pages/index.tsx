@@ -10,7 +10,6 @@ import { speakCharacter } from "@/features/messages/speakCharacter";
 import { MessageInputContainer } from "@/components/messageInputContainer";
 import { SYSTEM_PROMPT } from "@/features/constants/systemPromptConstants";
 import { KoeiroParam, DEFAULT_PARAM } from "@/features/constants/koeiroParam";
-import { getChatResponseStream } from "@/features/chat/openAiChat";
 import { Introduction } from "@/components/introduction";
 import { Menu } from "@/components/menu";
 import { GitHubLink } from "@/components/githubLink";
@@ -21,6 +20,9 @@ export default function Home() {
 
   const [systemPrompt, setSystemPrompt] = useState(SYSTEM_PROMPT);
   const [openAiKey, setOpenAiKey] = useState("");
+  const [geminiApiKey, setGeminiApiKey] = useState("");
+  const [selectLLM, setSelectLLM] = useState("openai");
+  const [selectModel, setSelectModel] = useState("gpt-4o-mini");
   const [koeiromapKey, setKoeiromapKey] = useState("");
   const [koeiroParam, setKoeiroParam] = useState<KoeiroParam>(DEFAULT_PARAM);
   const [chatProcessing, setChatProcessing] = useState(false);
@@ -35,6 +37,8 @@ export default function Home() {
       setSystemPrompt(params.systemPrompt ?? SYSTEM_PROMPT);
       setKoeiroParam(params.koeiroParam ?? DEFAULT_PARAM);
       setChatLog(params.chatLog ?? []);
+      setSelectLLM(params.selectLLM ?? "openai");
+      setSelectModel(params.selectModel ?? "gpt-4o-mini");
     }
   }, []);
 
@@ -42,10 +46,10 @@ export default function Home() {
     process.nextTick(() =>
       window.localStorage.setItem(
         "chatVRMParams",
-        JSON.stringify({ systemPrompt, koeiroParam, chatLog })
+        JSON.stringify({ systemPrompt, koeiroParam, chatLog, selectLLM, selectModel })
       )
     );
-  }, [systemPrompt, koeiroParam, chatLog]);
+  }, [systemPrompt, koeiroParam, chatLog, selectLLM, selectModel]);
 
   const handleChangeChatLog = useCallback(
     (targetIndex: number, text: string) => {
@@ -77,7 +81,8 @@ export default function Home() {
    */
   const handleSendChat = useCallback(
     async (text: string) => {
-      if (!openAiKey) {
+      const apiKey = selectLLM === "openai" ? openAiKey : geminiApiKey;
+      if (!apiKey) {
         setAssistantMessage("APIキーが入力されていません");
         return;
       }
@@ -103,18 +108,31 @@ export default function Home() {
         ...messageLog,
       ];
 
-      const stream = await getChatResponseStream(messages, openAiKey).catch(
-        (e) => {
-          console.error(e);
-          return null;
-        }
-      );
+      const stream = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages,
+          llm: selectLLM,
+          model: selectModel,
+          apiKey: {
+            openai: openAiKey,
+            gemini: geminiApiKey,
+          },
+        }),
+      }).catch((e) => {
+        console.error(e);
+        return null;
+      });
+
       if (stream == null) {
         setChatProcessing(false);
         return;
       }
 
-      const reader = stream.getReader();
+      const reader = stream.body!.getReader();
       let receivedMessage = "";
       let aiTextLog = "";
       let tag = "";
@@ -124,10 +142,10 @@ export default function Home() {
           const { done, value } = await reader.read();
           if (done) break;
 
-          receivedMessage += value;
+          receivedMessage += new TextDecoder().decode(value);
 
           // 返答内容のタグ部分の検出
-          const tagMatch = receivedMessage.match(/^\[(.*?)\]/);
+          const tagMatch = receivedMessage.match(/^\\[(.*?)\\]/);
           if (tagMatch && tagMatch[0]) {
             tag = tagMatch[0];
             receivedMessage = receivedMessage.slice(tag.length);
@@ -147,7 +165,7 @@ export default function Home() {
             // 発話不要/不可能な文字列だった場合はスキップ
             if (
               !sentence.replace(
-                /^[\s\[\(\{「［（【『〈《〔｛«‹〘〚〛〙›»〕》〉』】）］」\}\)\]]+$/g,
+                /^\\[\\s\\[\\(\\{「［（【『〈《〔｛«‹〘〚〛〙›»〕》〉』】）］」\}\\)\\]]+\\/g,
                 ""
               )
             ) {
@@ -181,7 +199,7 @@ export default function Home() {
       setChatLog(messageLogAssistant);
       setChatProcessing(false);
     },
-    [systemPrompt, chatLog, handleSpeakAi, openAiKey, koeiroParam]
+    [systemPrompt, chatLog, handleSpeakAi, openAiKey, geminiApiKey, selectLLM, selectModel, koeiroParam]
   );
 
   return (
@@ -200,15 +218,21 @@ export default function Home() {
       />
       <Menu
         openAiKey={openAiKey}
+        geminiApiKey={geminiApiKey}
         systemPrompt={systemPrompt}
         chatLog={chatLog}
         koeiroParam={koeiroParam}
         assistantMessage={assistantMessage}
         koeiromapKey={koeiromapKey}
+        selectLLM={selectLLM}
+        selectModel={selectModel}
         onChangeAiKey={setOpenAiKey}
+        onChangeGeminiApiKey={setGeminiApiKey}
         onChangeSystemPrompt={setSystemPrompt}
         onChangeChatLog={handleChangeChatLog}
         onChangeKoeiromapParam={setKoeiroParam}
+        onChangeSelectLLM={(e) => setSelectLLM(e.target.value)}
+        onChangeModel={(e) => setSelectModel(e.target.value)}
         handleClickResetChatLog={() => setChatLog([])}
         handleClickResetSystemPrompt={() => setSystemPrompt(SYSTEM_PROMPT)}
         onChangeKoeiromapKey={setKoeiromapKey}

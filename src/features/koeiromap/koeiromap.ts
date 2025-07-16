@@ -38,6 +38,9 @@ export async function aivisSpeech(
   baseUrl: string = "http://127.0.0.1:10101"
 ) {
   try {
+     // ★ ここでメッセージ整形！
+    message = message.trim().replace(/\s+/g, ' ').replace(/\n/g, '');
+
     console.log(`Aivis Speech: Calling ${baseUrl} with message: "${message}", speaker: ${speakerId}`);
     
     // 1. まずaudio_queryでテキストを解析
@@ -97,6 +100,9 @@ export async function aivisSpeech(
     
     const base64Audio = Buffer.from(audioBuffer).toString('base64');
     console.log("Base64 audio length:", base64Audio.length);
+
+    // ここに追加 ↓↓↓
+    console.log("Base64 head:", base64Audio.substring(0, 100) + "...");
 
     return { audio: base64Audio };
   } catch (error) {

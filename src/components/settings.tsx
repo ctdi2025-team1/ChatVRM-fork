@@ -195,6 +195,13 @@ export const Settings = ({
                   <option value={1388823426}>凛音エル (Fear)</option>
                   <option value={1388823427}>凛音エル (Happy)</option>
                   <option value={1388823428}>凛音エル (Sad)</option>
+                  <option value={1310138976}>もりもっさんメンズ (Normal)</option>
+                  <option value={1310138977}>もりもっさんメンズ (Calm)</option>
+                  <option value={1310138978}>もりもっさんメンズ (Far)</option>
+                  <option value={1310138979}>もりもっさんメンズ (Heavy)</option>
+                  <option value={1310138980}>もりもっさんメンズ (Mid)</option>
+                  <option value={1310138981}>もりもっさんメンズ (Shout)</option>
+                  <option value={1310138982}>もりもっさんメンズ (Surprise)</option>
                 </select>
               </>
             )}

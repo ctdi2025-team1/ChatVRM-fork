@@ -12,6 +12,17 @@ Koemotion API Key
 
 ※いずれも無料枠でそれなりに使用可能
 
+Gemini の API キーは環境変数 `NEXT_PUBLIC_GEMINI_API_KEY` または
+`NEXT_PUBLIC_GOOGLE_API_KEY` として設定しておくと
+ブラウザ起動時に入力欄へ自動で反映されます。 `.env` ファイルを利用する場合は
+以下のように記述してください。
+
+```
+NEXT_PUBLIC_GEMINI_API_KEY=your-api-key
+# もしくは
+NEXT_PUBLIC_GOOGLE_API_KEY=your-api-key
+```
+
 ## 起動方法
 
 ```bash

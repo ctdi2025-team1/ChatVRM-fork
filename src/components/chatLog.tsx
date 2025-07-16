@@ -1,10 +1,23 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { Message } from "@/features/messages/messages";
+import { TextButton } from "./textButton";
 type Props = {
   messages: Message[];
 };
 export const ChatLog = ({ messages }: Props) => {
   const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  const handleCopyLog = useCallback(() => {
+    const text = messages
+      .map((msg) =>
+        `${msg.role === "assistant" ? "CHARACTER" : "YOU"}: ${msg.content}`
+      )
+      .join("\n");
+
+    navigator.clipboard.writeText(text).then(() => {
+      alert("会話をコピーしました");
+    });
+  }, [messages]);
 
   useEffect(() => {
     chatScrollRef.current?.scrollIntoView({
@@ -21,6 +34,9 @@ export const ChatLog = ({ messages }: Props) => {
   }, [messages]);
   return (
     <div className="absolute w-col-span-6 max-w-full h-[100svh] pb-64">
+      <div className="absolute top-24 right-24 z-20">
+        <TextButton onClick={handleCopyLog}>会話をコピー</TextButton>
+      </div>
       <div className="max-h-full px-16 pt-104 pb-64 overflow-y-auto scroll-hidden">
         {messages.map((msg, i) => {
           return (

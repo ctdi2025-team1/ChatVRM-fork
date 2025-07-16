@@ -21,7 +21,11 @@ export default function Home() {
   const { viewer } = useContext(ViewerContext);
 
   const [systemPrompt, setSystemPrompt] = useState(SYSTEM_PROMPT);
-  const [googleApiKey, setGoogleApiKey] = useState("");
+  const [googleApiKey, setGoogleApiKey] = useState(
+    process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+      process.env.NEXT_PUBLIC_GOOGLE_API_KEY ||
+      ""
+  );
   const [geminiModel, setGeminiModel] = useState("gemini-2.0-flash-001");
   const [koeiromapKey, setKoeiromapKey] = useState("");
   const [koeiroParam, setKoeiroParam] = useState<KoeiroParam>(DEFAULT_PARAM);
